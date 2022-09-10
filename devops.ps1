@@ -10,6 +10,7 @@ $global:Type = $Path.BaseName -split "-" | Select-Object -First 1
 $global:Context = $Path.BaseName -split "-" | Select-Object -Last 1
 $global:Name = "{0}-{1}" -f $Type, $Context
 $global:Path = $Path
+$global:DockerUsername = "yilmazchef"
 
 ############################## UTILITY FUNCTIONS ##############################
 
@@ -1785,10 +1786,10 @@ EXPOSE 80
 
 function Get-DockerComposeYamlLocal() {
 
-    $UIFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "ui-" + $global:Context + ":latest"
-    $SERVICEFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "service-" + $global:Name + ":latest"
-    $DBFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "db-" + $global:Context + ":latest"
-    $DBAFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "dba-" + $global:Context + ":latest"
+    $UIFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "ui-" + $global:Context + ":latest"
+    $SERVICEFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "service-" + $global:Name + ":latest"
+    $DBFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "db-" + $global:Context + ":latest"
+    $DBAFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "dba-" + $global:Context + ":latest"
 
     $YamlResponse = @'
 version: '3.7'
@@ -2129,21 +2130,27 @@ As for any pre-built image usage, it is the image user's responsibility to ensur
 
 function Update-ImageTags() {
 
-    $DBFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "db-" + $global:Context + ":latest"
-    $DBAFQN = "docker.io" + "/" + $env:DOCKER_USERNAME + "/" + "dba-" + $global:Context + ":latest"
+    $DBFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "db-" + $global:Context + ":latest"
+    $DBAFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "dba-" + $global:Context + ":latest"
+    $UIFQN = "docker.io" + "/" + "yilmazchef" + "/" + "ui-" + $global:Context + ":latest"
 
     docker tag mysql:5.7 $DBFQN
     docker tag adminer:latest $DBAFQN
 
+    docker build -t $UIFQN .
 }
 
+function Push-ImageTags() {
 
-Install-PowershellModuleIfNotExists -ModuleName 'PowerShellGet'
-Install-PowershellModuleIfNotExists -ModuleName 'QRCodeGenerator'
-Install-PowershellModuleIfNotExists -ModuleName 'powershell-yaml'
-Install-PowershellModuleIfNotExists -ModuleName "Docker-ci"
+    $DBFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "db-" + $global:Context + ":latest"
+    $DBAFQN = "docker.io" + "/" + $global:DockerUsername + "/" + "dba-" + $global:Context + ":latest"
+    $UIFQN = "docker.io" + "/" + "yilmazchef" + "/" + "ui-" + $global:Context + ":latest"
 
+    docker push $DBFQN
+    docker push $DBAFQN
 
+    docker push $UIFQN
+}
 function Save-DockerComposeYaml() {
 
     $Yaml = Get-DockerComposeYamlLocal
@@ -2172,8 +2179,23 @@ function Save-All() {
     Save-Readme
 }
 
+function Start-All() {
+    docker-compose up -d
+}
+
+docker login -u $DockerUsername -p (Read-Host -Prompt "Password" -AsSecureString)
+
+Install-PowershellModuleIfNotExists -ModuleName 'PowerShellGet'
+Install-PowershellModuleIfNotExists -ModuleName 'QRCodeGenerator'
+Install-PowershellModuleIfNotExists -ModuleName 'powershell-yaml'
+Install-PowershellModuleIfNotExists -ModuleName "Docker-ci"
+
 Save-All
 
-$UIFQN = "docker.io" + "/" + "yilmazchef" + "/" + "ui-" + $global:Context + ":latest"
-docker build -t $UIFQN .
+Update-ImageTags
 
+Push-ImageTags
+
+docker logout -u $DockerUsername
+
+Start-All

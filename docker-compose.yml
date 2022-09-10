@@ -9,7 +9,7 @@ services:
     ########################################################################################################################################################
     
     ui-wptemp:
-        image: docker.io/ibcr/ui-wptemp:latest
+        image: docker.io/yilmazchef/ui-wptemp:latest
         build: 
             context: .
             dockerfile: Dockerfile
@@ -32,7 +32,7 @@ services:
 
 
     db-wptemp:
-        image: docker.io/ibcr/db-wptemp:latest
+        image: docker.io/yilmazchef/db-wptemp:latest
         container_name: db-wptemp
         restart: unless-stopped
         ports:
@@ -55,7 +55,7 @@ services:
 
     
     dba-wptemp:
-        image: docker.io/ibcr/dba-wptemp:latest
+        image: docker.io/yilmazchef/dba-wptemp:latest
         container_name: dba-wptemp
         restart: unless-stopped
         depends_on:
