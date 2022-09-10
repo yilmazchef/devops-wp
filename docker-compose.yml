@@ -1,0 +1,91 @@
+version: '3.7'
+
+services:
+
+    ########################################################################################################################################################
+
+    ### wptemp Wordpress Docker composition settings for ui-wptemp and db-wptemp ###
+
+    ########################################################################################################################################################
+    
+    ui-wptemp:
+        image: docker.io/ibcr/ui-wptemp:latest
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        container_name: ui-wptemp
+        ports:
+            - "5000-5999:80"
+        depends_on:
+            - db-wptemp
+        environment:
+            WORDPRESS_DB_HOST: wptemp
+            WORDPRESS_DB_USER: wptemp
+            WORDPRESS_DB_PASSWORD: wptemp
+            WORDPRESS_DB_NAME: wptemp
+        volumes:
+            - disk-ui:/var/www/html
+        networks:
+            - wptemp-net
+            - cloud-net
+
+
+    db-wptemp:
+        image: docker.io/ibcr/db-wptemp:latest
+        container_name: db-wptemp
+        restart: unless-stopped
+        ports:
+            - "3000-3999:3306"
+        environment:
+            MYSQL_DATABASE: wptemp
+            MYSQL_USER: wptemp
+            MYSQL_PASSWORD: wptemp
+            MYSQL_RANDOM_ROOT_PASSWORD: '1'
+        healthcheck:
+            test: ["CMD", "test -f var/lib/mysql/wptemp"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        volumes:
+            - disk-db:/var/lib/mysql/data
+        networks:
+            - wptemp-net
+            - cloud-net
+
+    
+    dba-wptemp:
+        image: docker.io/ibcr/dba-wptemp:latest
+        container_name: dba-wptemp
+        restart: unless-stopped
+        depends_on:
+            db-wptemp:
+                condition: service_started
+        ports:
+            - "4000-4999:8080"
+        networks:
+            - wptemp-net
+            - cloud-net
+
+
+###############################################################################################
+
+### Networks to be created to facilitate communication between containers ###
+
+###############################################################################################
+
+networks:
+    cloud-net:
+        driver: bridge
+    wptemp-net:
+
+###############################################################################################
+
+### Volumes to be created to facilitate to share resources between containers ###
+
+###############################################################################################
+
+volumes:
+    disk-ui:
+    disk-db:
+

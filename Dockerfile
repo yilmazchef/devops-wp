@@ -1,0 +1,10 @@
+
+FROM wordpress:apache
+
+ENV WORDPRESS_DB_HOST=db-wptemp
+ENV WORDPRESS_DB_USER=wptemp
+ENV WORDPRESS_DB_PASSWORD=wptemp
+ENV WORDPRESS_DB_NAME=wptemp
+
+EXPOSE 80
+
